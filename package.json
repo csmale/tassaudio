@@ -1,0 +1,14 @@
+{
+  "name": "tassaudio",
+  "version": "1.0.0",
+  "description": "Create 4-channel Audio files using Tass algorithm for Parkinsons therapy",
+  "main": "tassaudio.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "colin.smale@xs4all.nl",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^10.0.1"
+  }
+}
