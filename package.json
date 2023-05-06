@@ -6,9 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "tassaudio": "./tassaudio.js"
+  },
   "author": "colin.smale@xs4all.nl",
-  "license": "MIT",
-  "dependencies": {
-    "commander": "^10.0.1"
-  }
+  "license": "MIT"
 }
