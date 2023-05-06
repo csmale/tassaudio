@@ -5,6 +5,7 @@ Create 4-channel Audio files using Tass algorithm for Parkinsons therapy
 Usage: tassaudio [options]
 
 Options:
+
     --debug                     Enable debug mode
     -q, --quiet                 Quiet mode
     -o, --out <value>           Output file (default: "")
