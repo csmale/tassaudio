@@ -31,6 +31,7 @@ program
     .option('--max-amplitude <value>', 'Maximum amplitude', 32760)
     .option('--sample-frequency <value>', 'Sample frequency', 22050)
     .option('--jitter <value>', 'Jitter in percent', 23.5)
+    .option('--use-side-channels', 'Use Side L/R instead of Rear L/R', false)
     .parse();
 
 const opts = program.opts();
@@ -85,6 +86,7 @@ if(isNaN(maxAmp) || (maxAmp < 1) || (maxAmp > 32767)) {
     console.log('Amplitude must be a number between 1 and 32767.');
     program.help();
 }
+const useSideChannels = opts.useSideChannels;
 
 if(!quiet) {
     console.log(`Sample freq: ${sampleFrequency} Hz`);
@@ -93,6 +95,7 @@ if(!quiet) {
     console.log(`Log file   : ${fLog}`);
     console.log(`Duration   : ${targetDuration} s`);
     console.log(`Amplitude  : ${maxAmp}`);
+    console.log(`Side chans : ${useSideChannels}`)
 }
 
 
@@ -322,7 +325,7 @@ function initWavHeader() {
         sampleRate: sampleFrequency,
         bytesPerSample: 2,
         use_extensible: true,
-        channelMask: SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
+        channelMask: SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | (useSideChannels?(SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT):(SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT))
     };
 }
 
