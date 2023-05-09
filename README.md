@@ -17,4 +17,5 @@ Options:
     --max-amplitude <value>     Maximum amplitude (default: 32760)
     --sample-frequency <value>  Sample frequency (default: 22050)
     --jitter <value>            Jitter in percent (default: 23.5)
+    --use-side-channels         Use Side L/R instead of Rear L/R (default: false)
     -h, --help                  display help for command
