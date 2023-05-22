@@ -182,10 +182,11 @@ for(i=0; i<nFingers+(sixChan?2:0); i++) {
     aOut.push(new Array(100000)); // size in elements. we will put numbers in here (int16)
     aOutptr.push(0);    // output pointer into the aOut array
 }
-var outbuf = new ArrayBuffer(10000000); // size in bytes, needs to be big enough for a whole multichannel phrase
+var outbuf = new ArrayBuffer(20000000); // size in bytes, needs to be big enough for a whole multichannel phrase
 var outdv = new DataView(outbuf);
 var totSamples = 0;
-
+const nPhrases = Math.round(targetDuration / (tCR * (nBlocksOFF+nBlocksON)));
+const duration = (intro*nFingers) + (tCR * (nBlocksOFF + nBlocksON) * nPhrases);
 
 // note: even the first pulse of a new phrase can be pulled forward to start before the "beat"
 
@@ -219,6 +220,8 @@ function addSilence(f, t) {
 }
 
 function addSample(f, x) {
+    // if(aOutptr[f] >= aOut[f].length)
+    //    flush();
     aOut[f][aOutptr[f]++] = x;
     if(f==0) totSamples++;
 }
@@ -263,9 +266,8 @@ function makeIntro() {
             }
         }
     }
+    flush();
 }
-const nPhrases = Math.round(targetDuration / (tCR * (nBlocksOFF+nBlocksON)));
-const duration = tCR * (nBlocksOFF + nBlocksON) * nPhrases;
 
 function makePhrases() {
     // easier idea: calculate jitter one note ahead
@@ -277,8 +279,10 @@ function makePhrases() {
     var tStart;
     for(;;) {
         if(debug) console.log(`t=${t} (end=${targetDuration})`);
-        if(t > targetDuration)
+        if(t > targetDuration) {
+            console.log(`Done at t=${t} (end=${targetDuration})`);
             break;
+        }
         cycle++;
         bar = 0;
         tStart = totSamples;
@@ -293,7 +297,7 @@ function makePhrases() {
             for(n=0; n<4; n++) { // for each note
                 let lFinger = 0;
                 for(f=0; f<nFingers; f++) { // for each finger (output channel)
-                    if(debug) console.log(`#${f+1} in sequence is ${seq[f]}`);
+                    if(debug) console.log(`#${f+1} in sequence is ${seq[lFinger]}`);
                     if(sixChan && (f==2 || f==3)) {
                         addSilence(f, tTone);
                     } else {
@@ -362,6 +366,7 @@ function initWavHeader() {
     }
     if(sixChan)
         mask |= (SPEAKER_LOW_FREQUENCY | SPEAKER_FRONT_CENTER);
+    console.log(`WAV header duration=${duration} numFrames=${sampleFrequency * duration}`);
     return {
         numFrames: sampleFrequency * duration,
         numChannels: nFingers,
