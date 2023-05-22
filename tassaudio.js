@@ -32,6 +32,8 @@ program
     .option('--sample-frequency <value>', 'Sample frequency', 22050)
     .option('--jitter <value>', 'Jitter in percent', 23.5)
     .option('--use-side-channels', 'Use Side L/R instead of Rear L/R', false)
+    .option('-6, --sixchan', 'Produce 6-channel (5.1) output instead of quad (4.0)', false)
+    .option('--intro <value>', 'Add introductory channel map check of N seconds', 0)
     .parse();
 
 const opts = program.opts();
@@ -56,6 +58,11 @@ if(isNaN(sampleFrequency) || (sampleFrequency < 1000) || (sampleFrequency > 4410
 const jitterPct = parseFloat(opts.jitter) / 100.0;        // fraction, so 0.235 means 23.5%, or around 20ms
 if(isNaN(jitterPct) || (jitterPct < 0.0) || (jitterPct > 0.235)) {
     console.log('Jitter must be a number between 0 and 23.5.');
+    program.help();
+}
+const intro = parseInt(opts.intro);        // number of seconds of intro per finger
+if(isNaN(intro) || (intro < 0) || (intro > 30)) {
+    console.log('Intro must be a number between 0 and 30.');
     program.help();
 }
 // file names
@@ -87,15 +94,18 @@ if(isNaN(maxAmp) || (maxAmp < 1) || (maxAmp > 32767)) {
     program.help();
 }
 const useSideChannels = opts.useSideChannels;
+const sixChan = opts.sixchan;
 
 if(!quiet) {
-    console.log(`Sample freq: ${sampleFrequency} Hz`);
-    console.log(`Jitter     : ${jitterPct*100}%`);
-    console.log(`Output file: ${fOut}`);
-    console.log(`Log file   : ${fLog}`);
-    console.log(`Duration   : ${targetDuration} s`);
-    console.log(`Amplitude  : ${maxAmp}`);
-    console.log(`Side chans : ${useSideChannels}`)
+    console.log(`Sample freq : ${sampleFrequency} Hz`);
+    console.log(`Jitter      : ${jitterPct*100}%`);
+    console.log(`Output file : ${fOut}`);
+    console.log(`Log file    : ${fLog}`);
+    console.log(`Duration    : ${targetDuration} s`);
+    console.log(`Amplitude   : ${maxAmp}`);
+    console.log(`Side chans  : ${useSideChannels}`);
+    console.log(`Output chans: ${sixChan?"5.1":"4.0"}`);
+    console.log(`Intro length: ${intro} seconds per finger`)
 }
 
 
@@ -107,7 +117,7 @@ const fCR = 1.5;        // Frequency base, 1.5Hz
 const tTone = 0.1;      // Length of tone, 0.1s = 100ms
 const nBlocksON = 3;    // bars of tones in a phrase
 const nBlocksOFF = 2;   // bars of silence between phrases
-const nFingers = 4;     // number of fingers = number of channels in output file
+const nFingers = sixChan?6:4;     // number of fingers = number of channels in output file
 
 /*
  * Derived values
@@ -130,7 +140,6 @@ const sequences = [
     [3,4,1,2],[3,4,2,1],[4,1,2,3],[4,1,3,2],
     [4,2,1,3],[4,2,3,1],[4,3,1,2],[4,3,2,1]];
                         // 24 possible sequences of 4 fingers
-
 /*
  * WAV file constants
  */
@@ -168,11 +177,12 @@ const SPEAKER_TOP_BACK_RIGHT	    = 0x20000;
  */
 var aOut = [];
 var aOutptr = [];
-for(i=0; i<nFingers; i++) {
+// nFingers+2 to account for the empty centre and LF channels in 6-channel mode
+for(i=0; i<nFingers+(sixChan?2:0); i++) {
     aOut.push(new Array(100000)); // size in elements. we will put numbers in here (int16)
     aOutptr.push(0);    // output pointer into the aOut array
 }
-var outbuf = new ArrayBuffer(2000000); // size in bytes, needs to be big enough for a whole multichannel phrase
+var outbuf = new ArrayBuffer(10000000); // size in bytes, needs to be big enough for a whole multichannel phrase
 var outdv = new DataView(outbuf);
 var totSamples = 0;
 
@@ -238,6 +248,22 @@ function jitter() {
 
 // main program
 
+function makeIntro() {
+    if(intro == 0)
+        return;
+    let intTone = createSine(fBase, intro, sampleFrequency);
+    for(let f=0; f<nFingers; f++) {
+        for(let c=0; c<nFingers; c++) {
+            if(c==f) {
+                for(let i=0; i<intTone.length; i++) {
+                    addSample(f, intTone[i]);
+                }
+            } else {
+                addSilence(f, intro);
+            }
+        }
+    }
+}
 const nPhrases = Math.round(targetDuration / (tCR * (nBlocksOFF+nBlocksON)));
 const duration = tCR * (nBlocksOFF + nBlocksON) * nPhrases;
 
@@ -265,13 +291,19 @@ function makePhrases() {
             fs.writeSync(fdLog,`${cycle},${bar},${seqnum},${(tStart+aOutptr[0])/sampleFrequency},${t}\n`);
 
             for(n=0; n<4; n++) { // for each note
-                for(f=0; f<nFingers; f++) { // for each finger
+                let lFinger = 0;
+                for(f=0; f<nFingers; f++) { // for each finger (output channel)
                     if(debug) console.log(`#${f+1} in sequence is ${seq[f]}`);
-                    if((f+1) == seq[n]) { // only one finger in this bar
-                        if(debug) console.log(`sounding tone on finger ${f}`);
-                        addTone(f);
-                    } else {
+                    if(sixChan && (f==2 || f==3)) {
                         addSilence(f, tTone);
+                    } else {
+                        if((lFinger+1) == seq[n]) { // only one finger in this bar
+                            if(debug) console.log(`sounding tone on finger ${lFinger}`);
+                            addTone(f);
+                        } else {
+                            addSilence(f, tTone);
+                        }
+                        lFinger++;
                     }
                 }
                 jThis = jitter();
@@ -304,6 +336,9 @@ const wavOpts = initWavHeader();
 var hdr = buildWaveHeader(wavOpts);
 fs.writeSync(fd, Buffer.from(hdr));
 
+if(intro) {
+    makeIntro();
+}
 // write multiple phrases until we get to 1hr
 makePhrases();
 
@@ -319,13 +354,21 @@ console.log(`log written to ${fLog}`);
  */
 
 function initWavHeader() {
+    var mask = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+    if(useSideChannels) {
+        mask |= (SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT);
+    } else {
+        mask |= (SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT);
+    }
+    if(sixChan)
+        mask |= (SPEAKER_LOW_FREQUENCY | SPEAKER_FRONT_CENTER);
     return {
         numFrames: sampleFrequency * duration,
         numChannels: nFingers,
         sampleRate: sampleFrequency,
         bytesPerSample: 2,
         use_extensible: true,
-        channelMask: SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | (useSideChannels?(SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT):(SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT))
+        channelMask: mask
     };
 }
 
