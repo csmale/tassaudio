@@ -177,8 +177,7 @@ const SPEAKER_TOP_BACK_RIGHT	    = 0x20000;
  */
 var aOut = [];
 var aOutptr = [];
-// nFingers+2 to account for the empty centre and LF channels in 6-channel mode
-for(i=0; i<nFingers+(sixChan?2:0); i++) {
+for(i=0; i<nFingers; i++) {
     aOut.push(new Array(100000)); // size in elements. we will put numbers in here (int16)
     aOutptr.push(0);    // output pointer into the aOut array
 }
