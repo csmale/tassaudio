@@ -279,7 +279,7 @@ function makePhrases() {
     for(;;) {
         if(debug) console.log(`t=${t} (end=${targetDuration})`);
         if(t > targetDuration) {
-            console.log(`Done at t=${t} (end=${targetDuration})`);
+            // console.log(`Done at t=${t} (end=${targetDuration})`);
             break;
         }
         cycle++;
@@ -291,7 +291,7 @@ function makePhrases() {
             let seqnum = Math.floor(Math.random()*24);
             seq = sequences[seqnum];
             if(debug) console.log(`block ${i} sequence #${seqnum} = ${seq}`)
-            fs.writeSync(fdLog,`${cycle},${bar},${seqnum},${(tStart+aOutptr[0])/sampleFrequency},${t}\n`);
+            fs.writeSync(fdLog,`${cycle},${bar},${seqnum},${(tStart+aOutptr[0])/sampleFrequency},${t+intro}\n`);
 
             for(n=0; n<4; n++) { // for each note
                 let lFinger = 0;
@@ -319,7 +319,7 @@ function makePhrases() {
         }
         for(i=0; i<nBlocksOFF; i++) {
             bar++;
-            fs.writeSync(fdLog,`${cycle},${bar},-1,${(tStart+aOutptr[0])/sampleFrequency},${t}\n`);
+            fs.writeSync(fdLog,`${cycle},${bar},-1,${(tStart+aOutptr[0])/sampleFrequency},${t+intro}\n`);
             for(f=0; f<4; f++) {
                 addSilence(f, tCR)
             }
@@ -365,7 +365,7 @@ function initWavHeader() {
     }
     if(sixChan)
         mask |= (SPEAKER_LOW_FREQUENCY | SPEAKER_FRONT_CENTER);
-    console.log(`WAV header duration=${duration} numFrames=${sampleFrequency * duration}`);
+    // console.log(`WAV header duration=${duration} numFrames=${sampleFrequency * duration}`);
     return {
         numFrames: sampleFrequency * duration,
         numChannels: nFingers,
