@@ -33,7 +33,7 @@ program
     .option('--jitter <value>', 'Jitter in percent', 23.5)
     .option('--use-side-channels', 'Use Side L/R instead of Rear L/R', false)
     .option('-6, --sixchan', 'Produce 6-channel (5.1) output instead of quad (4.0)', false)
-    .option('--intro <value>', 'Add introductory channel map check of N seconds', 0)
+    .option('--intro <value>', 'Add introductory channel map check of N seconds on each channel', 0.0)
     .parse();
 
 const opts = program.opts();
@@ -60,9 +60,9 @@ if(isNaN(jitterPct) || (jitterPct < 0.0) || (jitterPct > 0.235)) {
     console.log('Jitter must be a number between 0 and 23.5.');
     program.help();
 }
-const intro = parseInt(opts.intro);        // number of seconds of intro per finger
-if(isNaN(intro) || (intro < 0) || (intro > 30)) {
-    console.log('Intro must be a number between 0 and 30.');
+const intro = parseFloat(opts.intro);        // number of seconds of intro per finger
+if(isNaN(intro) || (intro < 0.0) || (intro > 30.0)) {
+    console.log('Intro length must be a number between 0.0 and 30.0.');
     program.help();
 }
 // file names
@@ -251,7 +251,7 @@ function jitter() {
 // main program
 
 function makeIntro() {
-    if(intro == 0)
+    if(intro == 0.0)
         return;
     let intTone = createSine(fBase, intro, sampleFrequency);
     for(let f=0; f<nFingers; f++) {
@@ -276,6 +276,7 @@ function makePhrases() {
     var cycle = 0;
     var bar;
     var tStart;
+    var tIntro = intro * nFingers;  // total length of intro block
     for(;;) {
         if(debug) console.log(`t=${t} (end=${targetDuration})`);
         if(t > targetDuration) {
@@ -291,7 +292,7 @@ function makePhrases() {
             let seqnum = Math.floor(Math.random()*24);
             seq = sequences[seqnum];
             if(debug) console.log(`block ${i} sequence #${seqnum} = ${seq}`)
-            fs.writeSync(fdLog,`${cycle},${bar},${seqnum},${(tStart+aOutptr[0])/sampleFrequency},${t+intro}\n`);
+            fs.writeSync(fdLog,`${cycle},${bar},${seqnum},${(tStart+aOutptr[0])/sampleFrequency},${t+tIntro}\n`);
 
             for(n=0; n<4; n++) { // for each note
                 let lFinger = 0;
@@ -319,7 +320,7 @@ function makePhrases() {
         }
         for(i=0; i<nBlocksOFF; i++) {
             bar++;
-            fs.writeSync(fdLog,`${cycle},${bar},-1,${(tStart+aOutptr[0])/sampleFrequency},${t+intro}\n`);
+            fs.writeSync(fdLog,`${cycle},${bar},-1,${(tStart+aOutptr[0])/sampleFrequency},${t+tIntro}\n`);
             for(f=0; f<4; f++) {
                 addSilence(f, tCR)
             }
