@@ -10,5 +10,8 @@
     "tassaudio": "./tassaudio.js"
   },
   "author": "colin.smale@xs4all.nl",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0"
+  }
 }
