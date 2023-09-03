@@ -1,7 +1,29 @@
 # tassaudio
-Create 4-channel Audio files using Tass algorithm for Parkinsons therapy
+Create 4/6-channel Audio files using Tass algorithm for Parkinsons therapy.
+
+## Inspired by the following articles 
+
+Coordinated Reset Vibrotactile Stimulation Induces Sustained Cumulative Benefits in Parkinson’s Disease
+(Pfeifer KJ et al.)
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8055937/
+
+Tass Vibrating Gloves: DIY, Hacks, Ideas, Prototypes...
+(Snowski)
+https://healthunlocked.com/cure-parkinsons/posts/148836810/tass-vibrating-gloves-diy-hacks-ideas-prototypes...
+
+## Prerequisites
+Make sure you have a working node.js installation on your system, which includes npm. Check by using the commands below, which should display the installed versions.
+
+    node -v
+    npm -v
+
+![check-versions](images/check-versions.png)
+
+If required, install them first.
+Node.js can be downloaded from https://nodejs.org/ . This also includes the npm command.
 
 ## Installation
+Use the following command to install tassaudio:
 
     npm install -g
 
