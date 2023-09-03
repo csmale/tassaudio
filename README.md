@@ -17,12 +17,18 @@ Make sure you have a working node.js installation on your system, which includes
     node -v
     npm -v
 
+The output should be similar to this:
+
 ![check-versions](images/check-versions.png)
 
 If required, install them first.
 Node.js can be downloaded from https://nodejs.org/ . This also includes the npm command.
 
 ## Installation
+Download the latest release from https://github.com/csmale/tassaudio/releases .
+
+Unpack the downloaded file (.zip or .tar.gz) into a convenient folder where the files can remain.
+
 Use the following command to install tassaudio:
 
     npm install -g
